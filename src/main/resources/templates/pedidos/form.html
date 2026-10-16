@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Pedido</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="${pedidoExistente != null} ? @{/pedidos/{id}(id=${pedidoExistente.id})} : @{/pedidos}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold mb-0"
+            th:text="${pedidoExistente != null} ? 'Editar ' + ${pedidoExistente.identificacao} : 'Novo Pedido'">Novo Pedido</h2>
+    </div>
+
+    <div class="card shadow-sm" style="max-width: 860px;">
+        <div class="card-body p-4">
+
+            <form th:action="${pedidoExistente != null}
+                        ? @{/pedidos/{id}/editar(id=${pedidoExistente.id})}
+                        : @{/pedidos}"
+                  th:object="${pedidoForm}" method="post" id="formPedido">
+
+                <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Corrija os campos destacados.
+                    <ul class="mb-0 small">
+                        <li th:each="mensagem : ${#fields.errors('*')}" th:text="${mensagem}"></li>
+                    </ul>
+                </div>
+
+                <!-- Cliente -->
+                <div class="mb-3">
+                    <label for="clienteId" class="form-label fw-medium"><i class="bi bi-person me-1"></i>Cliente</label>
+                    <select id="clienteId" class="form-select" th:field="*{clienteId}" required
+                            th:classappend="${#fields.hasErrors('clienteId')} ? 'is-invalid'">
+                        <option value="">Selecione o cliente...</option>
+                        <option th:each="c : ${clientes}" th:value="${c.id}"
+                                th:text="${c.nome} + ' — ' + ${c.telefone}"></option>
+                    </select>
+                    <div class="form-text" sec:authorize="hasRole('ATENDENTE')">
+                        Cliente novo? <a th:href="@{/clientes/novo}">Cadastre-o primeiro</a>.
+                    </div>
+                </div>
+
+                <!-- Tipo de atendimento -->
+                <div class="mb-3">
+                    <label class="form-label fw-medium d-block"><i class="bi bi-truck me-1"></i>Atendimento</label>
+                    <div class="form-check form-check-inline" th:each="tipo : ${tiposAtendimento}">
+                        <input class="form-check-input" type="radio" th:field="*{tipoAtendimento}" th:value="${tipo}" required>
+                        <label class="form-check-label" th:for="${#ids.prev('tipoAtendimento')}" th:text="${tipo.descricao}"></label>
+                    </div>
+                    <div class="form-text">Entrega usa o endereço do cadastro do cliente.</div>
+                </div>
+
+                <!-- Itens -->
+                <label class="form-label fw-medium"><i class="bi bi-basket me-1"></i>Itens</label>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-2">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produto</th>
+                                <th style="width: 110px;">Qtd.</th>
+                                <th class="text-end" style="width: 130px;">Subtotal*</th>
+                                <th style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itens">
+                            <tr th:each="item, st : *{itens}" class="item-linha">
+                                <td>
+                                    <select class="form-select produto" th:field="*{itens[__${st.index}__].produtoId}" required>
+                                        <option value="">Selecione...</option>
+                                        <option th:each="p : ${produtos}" th:value="${p.id}" th:attr="data-preco=${p.preco}"
+                                                th:text="${p.nome} + ' — R$ ' + ${#numbers.formatDecimal(p.preco, 1, 'POINT', 2, 'COMMA')}"></option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control quantidade" min="1" max="50" required
+                                           th:field="*{itens[__${st.index}__].quantidade}">
+                                </td>
+                                <td class="text-end subtotal">—</td>
+                                <td>
+                                    <button type="button" class="btn btn-outline-danger btn-sm remover" title="Remover item">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="adicionarItem">
+                    <i class="bi bi-plus-lg"></i> Adicionar item
+                </button>
+
+                <div class="d-flex justify-content-end align-items-baseline gap-2 mb-1">
+                    <span class="text-muted">Total estimado:</span>
+                    <span class="fs-5 fw-bold" id="totalEstimado">R$ 0,00</span>
+                </div>
+                <p class="text-muted small text-end">
+                    * Estimativa exibida no navegador. O valor final é calculado pelo servidor com os preços cadastrados
+                    <span th:if="${pedidoExistente != null and pedidoExistente.percentualDesconto != null and pedidoExistente.percentualDesconto > 0}"
+                          th:text="'e o desconto de ' + ${pedidoExistente.percentualDesconto} + '% já autorizado'"></span>.
+                </p>
+
+                <!-- Observações -->
+                <div class="mb-4">
+                    <label for="observacoes" class="form-label fw-medium">Observações</label>
+                    <textarea id="observacoes" class="form-control" rows="2" maxlength="500" th:field="*{observacoes}"
+                              placeholder="Ex.: sem cebola, troco para R$ 100"></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${pedidoExistente != null} ? 'Salvar Alterações' : 'Registrar Pedido'"></span>
+                    </button>
+                    <a th:href="@{/pedidos}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modelo de linha usado pelo botão "Adicionar item" -->
+    <template id="modeloItem">
+        <tr class="item-linha">
+            <td>
+                <select class="form-select produto" required>
+                    <option value="">Selecione...</option>
+                    <option th:each="p : ${produtos}" th:value="${p.id}" th:attr="data-preco=${p.preco}"
+                            th:text="${p.nome} + ' — R$ ' + ${#numbers.formatDecimal(p.preco, 1, 'POINT', 2, 'COMMA')}"></option>
+                </select>
+            </td>
+            <td><input type="number" class="form-control quantidade" min="1" max="50" value="1" required></td>
+            <td class="text-end subtotal">—</td>
+            <td>
+                <button type="button" class="btn btn-outline-danger btn-sm remover" title="Remover item">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <script>
+        (function () {
+            const corpo = document.getElementById('itens');
+            const modelo = document.getElementById('modeloItem');
+            const moeda = new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'});
+
+            // Mantém os nomes itens[0].produtoId, itens[1].quantidade... em sequência para o Spring
+            function reindexar() {
+                corpo.querySelectorAll('tr.item-linha').forEach((linha, i) => {
+                    const produto = linha.querySelector('.produto');
+                    const quantidade = linha.querySelector('.quantidade');
+                    produto.name = `itens[${i}].produtoId`;
+                    produto.id = `itens${i}.produtoId`;
+                    quantidade.name = `itens[${i}].quantidade`;
+                    quantidade.id = `itens${i}.quantidade`;
+                });
+            }
+
+            function recalcular() {
+                let total = 0;
+                corpo.querySelectorAll('tr.item-linha').forEach(linha => {
+                    const opcao = linha.querySelector('.produto').selectedOptions[0];
+                    const preco = opcao ? parseFloat(opcao.dataset.preco || '0') : 0;
+                    const qtd = parseInt(linha.querySelector('.quantidade').value || '0', 10);
+                    const subtotal = preco * qtd;
+                    linha.querySelector('.subtotal').textContent = subtotal > 0 ? moeda.format(subtotal) : '—';
+                    total += subtotal;
+                });
+                document.getElementById('totalEstimado').textContent = moeda.format(total);
+            }
+
+            document.getElementById('adicionarItem').addEventListener('click', () => {
+                corpo.appendChild(modelo.content.cloneNode(true));
+                reindexar();
+                recalcular();
+            });
+
+            corpo.addEventListener('click', evento => {
+                const botao = evento.target.closest('.remover');
+                if (!botao) return;
+                if (corpo.querySelectorAll('tr.item-linha').length === 1) {
+                    alert('O pedido precisa de ao menos um item.');
+                    return;
+                }
+                botao.closest('tr').remove();
+                reindexar();
+                recalcular();
+            });
+
+            corpo.addEventListener('change', recalcular);
+            corpo.addEventListener('input', recalcular);
+            reindexar();
+            recalcular();
+        })();
+    </script>
+</div>
+
+</body>
+</html>

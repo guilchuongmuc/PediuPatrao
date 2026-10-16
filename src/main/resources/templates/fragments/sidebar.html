@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <!-- Os links aparecem conforme o perfil, mas a permissão real é verificada no backend -->
+        <div th:fragment="sidebar">
+            <div id="sidebar" class="d-flex flex-column">
+                <h4 class="text-center pt-3 mb-1">Pediu Patrão</h4>
+                <div class="text-center small pb-3 border-bottom border-secondary" sec:authorize="isAuthenticated()">
+                    <i class="bi bi-person-circle"></i>
+                    <span sec:authentication="name">usuario</span>
+                    <span class="badge bg-light text-dark ms-1" th:text="${perfilLogado}">PERFIL</span>
+                </div>
+                <ul class="nav flex-column mt-2">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}" th:classappend="${uriAtual == '/'} ? 'active'">
+                            <i class="bi bi-house"></i><span class="d-none d-md-inline">&nbsp;Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','GERENTE','ATENDENTE')">
+                        <a class="nav-link" th:href="@{/pedidos}"
+                           th:classappend="${uriAtual != null and uriAtual.startsWith('/pedidos')} ? 'active'">
+                            <i class="bi bi-bag"></i><span class="d-none d-md-inline">&nbsp;Pedidos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+                        <a class="nav-link" th:href="@{/clientes}"
+                           th:classappend="${uriAtual != null and uriAtual.startsWith('/clientes')} ? 'active'">
+                            <i class="bi bi-person-raised-hand"></i><span class="d-none d-md-inline">&nbsp;Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+                        <a class="nav-link" th:href="@{/produtos}"
+                           th:classappend="${uriAtual != null and uriAtual.startsWith('/produtos')} ? 'active'">
+                            <i class="bi bi-boxes"></i><span class="d-none d-md-inline">&nbsp;Produtos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','GERENTE')">
+                        <a class="nav-link" th:href="@{/auditoria}"
+                           th:classappend="${uriAtual != null and uriAtual.startsWith('/auditoria')} ? 'active'">
+                            <i class="bi bi-shield-check"></i><span class="d-none d-md-inline">&nbsp;Auditoria</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/usuarios}"
+                           th:classappend="${uriAtual != null and uriAtual.startsWith('/usuarios')} ? 'active'">
+                            <i class="bi bi-people-fill"></i><span class="d-none d-md-inline">&nbsp;Usuários</span>
+                        </a>
+                    </li>
+                </ul>
+                <!-- Logout via POST com token CSRF -->
+                <form th:action="@{/logout}" method="post" class="mt-auto p-3" sec:authorize="isAuthenticated()">
+                    <button type="submit" class="btn btn-outline-light btn-sm w-100">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

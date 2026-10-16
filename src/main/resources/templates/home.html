@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Home</title>
+</head>
+<body>
+
+<div class="container-fluid" th:fragment="content">
+    <div class="text-center pt-3 pb-4">
+        <img th:src="@{/images/logo.png}" alt="Logo" width="220" height="220">
+        <h1 class="mt-3">Bem-vindo, <span sec:authentication="name">usuário</span>!</h1>
+        <p class="lead mb-0" th:if="${perfilAtual != null}">
+            Perfil <strong th:text="${perfilAtual.descricao}">Perfil</strong>
+        </p>
+        <p class="text-muted" th:if="${perfilAtual != null}" th:text="${perfilAtual.responsabilidades}"></p>
+    </div>
+
+    <!-- Atalhos conforme o perfil (as permissões são validadas no servidor) -->
+    <div class="row g-3 justify-content-center">
+        <div class="col-sm-6 col-lg-3" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+            <a th:href="@{/pedidos/novo}" class="card text-decoration-none h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-plus-circle fs-2 text-primary"></i>
+                    <h5 class="mt-2 mb-0">Novo pedido</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-lg-3" sec:authorize="hasAnyRole('ADMIN','GERENTE','ATENDENTE')">
+            <a th:href="@{/pedidos}" class="card text-decoration-none h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-bag fs-2 text-primary"></i>
+                    <h5 class="mt-2 mb-0">Pedidos</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-lg-3" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+            <a th:href="@{/clientes}" class="card text-decoration-none h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-raised-hand fs-2 text-primary"></i>
+                    <h5 class="mt-2 mb-0">Clientes</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-lg-3" sec:authorize="hasAnyRole('ADMIN','GERENTE')">
+            <a th:href="@{/auditoria}" class="card text-decoration-none h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-shield-check fs-2 text-primary"></i>
+                    <h5 class="mt-2 mb-0">Auditoria</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-lg-3" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/usuarios}" class="card text-decoration-none h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-people-fill fs-2 text-primary"></i>
+                    <h5 class="mt-2 mb-0">Usuários e perfis</h5>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

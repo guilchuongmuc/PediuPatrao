@@ -1,0 +1,115 @@
+/* Estilos adicionais para páginas com sidebar */
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: row;
+    background-color: #f5f6f8;
+}
+
+main {
+    min-width: 0;
+}
+
+#sidebar {
+    min-width: 230px;
+    max-width: 230px;
+    background-color: #343a40;
+    color: white;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+}
+
+#sidebar a {
+    color: white;
+    text-decoration: none;
+}
+
+#sidebar a:hover {
+    background-color: #495057;
+    color: white;
+}
+
+#sidebar .nav-link.active {
+    background-color: #0d6efd;
+}
+
+#sidebar .nav-item .submenu {
+    display: none;
+    padding-left: 1.5rem;
+}
+
+#sidebar .nav-item.open .submenu {
+    display: block;
+}
+
+#content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+/* Linha do tempo do pedido */
+.timeline {
+    list-style: none;
+    padding-left: 1rem;
+    border-left: 2px solid #dee2e6;
+}
+
+.timeline li {
+    position: relative;
+    padding: 0 0 1rem 1rem;
+}
+
+.timeline li::before {
+    content: "";
+    position: absolute;
+    left: -1.42rem;
+    top: .35rem;
+    width: .75rem;
+    height: .75rem;
+    border-radius: 50%;
+    background: #0d6efd;
+}
+
+.timeline li.cancelado::before {
+    background: #dc3545;
+}
+
+.tabela-alteracoes td,
+.tabela-alteracoes th {
+    padding: .15rem .4rem;
+    font-size: .85rem;
+}
+
+.hash {
+    font-family: monospace;
+    font-size: .75rem;
+}
+
+@media (max-width: 768px) {
+    #sidebar {
+        position: fixed;
+        left: -230px;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+        transition: all 0.3s;
+    }
+
+    #sidebar.active {
+        left: 0;
+    }
+
+    #content {
+        margin-left: 0;
+    }
+
+    .toggle-btn {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1100;
+        cursor: pointer;
+    }
+}

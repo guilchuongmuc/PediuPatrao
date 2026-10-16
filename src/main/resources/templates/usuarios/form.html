@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Usuário</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a th:href="@{/usuarios}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h2 class="fw-bold mb-0">
+            <span th:text="${usuarioId != null} ? 'Editar Usuário' : 'Novo Usuário'"></span>
+        </h2>
+    </div>
+
+    <div class="card shadow-sm" style="max-width: 540px;">
+        <div class="card-body p-4">
+
+            <form th:action="${usuarioId != null}
+                        ? @{/usuarios/editar/{id}(id=${usuarioId})}
+                        : @{/usuarios/salvar}"
+                  th:object="${usuarioForm}"
+                  method="post">
+
+                <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
+                    <ul class="mb-0 small">
+                        <li th:each="mensagem : ${#fields.errors('*')}" th:text="${mensagem}"></li>
+                    </ul>
+                </div>
+
+                <!-- Username (imutável após o cadastro, para preservar a rastreabilidade da auditoria) -->
+                <div class="mb-3">
+                    <label for="username" class="form-label fw-medium">
+                        <i class="bi bi-person me-1"></i>Username
+                    </label>
+                    <input type="text"
+                           id="username"
+                           class="form-control"
+                           th:field="*{username}"
+                           th:readonly="${usuarioId != null}"
+                           placeholder="Ex: joao.silva"
+                           pattern="[a-zA-Z0-9._\-]{3,30}"
+                           required/>
+                    <div class="form-text" th:if="${usuarioId != null}">O username não pode ser alterado.</div>
+                </div>
+
+                <!-- Senha -->
+                <div class="mb-3">
+                    <label for="password" class="form-label fw-medium">
+                        <i class="bi bi-lock me-1"></i>Senha
+                        <small class="text-muted fw-normal" th:if="${usuarioId != null}">
+                            — deixe em branco para manter a atual
+                        </small>
+                    </label>
+                    <div class="input-group">
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               class="form-control"
+                               placeholder="Mínimo de 8 caracteres"
+                               minlength="8" maxlength="72"
+                               autocomplete="new-password"
+                               th:required="${usuarioId == null}"/>
+                        <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                            <i class="bi bi-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Perfil -->
+                <div class="mb-4">
+                    <label for="perfil" class="form-label fw-medium">
+                        <i class="bi bi-shield me-1"></i>Perfil
+                    </label>
+                    <!-- O próprio usuário não pode alterar seu perfil (regra validada também no servidor) -->
+                    <th:block th:if="${proprioUsuario}">
+                        <input type="hidden" th:field="*{perfil}">
+                        <select class="form-select" disabled>
+                            <option th:text="*{perfil}"></option>
+                        </select>
+                        <div class="form-text">Você não pode alterar o seu próprio perfil.</div>
+                    </th:block>
+                    <th:block th:unless="${proprioUsuario}">
+                        <select id="perfil" class="form-select" th:field="*{perfil}" th:errorclass="is-invalid" required>
+                            <option value="">Selecione um perfil</option>
+                            <option th:each="p : ${perfis}" th:value="${p}"
+                                    th:text="${p.name()} + ' — ' + ${p.descricao}"></option>
+                        </select>
+                        <ul class="form-text small ps-3 mt-2 mb-0">
+                            <li th:each="p : ${perfis}">
+                                <strong th:text="${p}"></strong>: <span th:text="${p.responsabilidades}"></span>
+                            </li>
+                        </ul>
+                    </th:block>
+                </div>
+
+                <!-- Botões -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${usuarioId != null} ? 'Salvar Alterações' : 'Criar Usuário'"></span>
+                    </button>
+                    <a th:href="@{/usuarios}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Toggle mostrar/ocultar senha
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const input = document.getElementById('password');
+            const icon  = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        });
+    </script>
+
+</div>
+
+</body>
+</html>

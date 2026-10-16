@@ -1,0 +1,8 @@
+/target/
+
+application-local.properties
+
+.idea/
+*.iml
+nbproject/private/
+.vscode/

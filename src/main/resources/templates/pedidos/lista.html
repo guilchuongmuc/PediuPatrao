@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Lista de Pedidos</title>
+</head>
+<body>
+
+<div th:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="bi bi-bag me-2 text-primary"></i>Pedidos
+        </h2>
+        <a th:href="@{/pedidos/novo}" class="btn btn-primary" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
+            <i class="bi bi-plus-lg me-1"></i> Novo Pedido
+        </a>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Nº</th>
+                        <th>Cliente</th>
+                        <th>Atendimento</th>
+                        <th>Itens</th>
+                        <th class="text-end">Total (R$)</th>
+                        <th>Status</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                        <th class="text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Lista vazia -->
+                    <tr th:if="${#lists.isEmpty(pedidos)}">
+                        <td colspan="9" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            Nenhum pedido encontrado.
+                        </td>
+                    </tr>
+                    <!-- Linhas -->
+                    <tr th:each="pedido : ${pedidos}">
+                        <td class="ps-4 fw-semibold" th:text="${pedido.numero != null} ? '#' + ${pedido.numero} : '—'"></td>
+                        <td th:text="${pedido.clienteNome ?: pedido.clienteId}"></td>
+                        <td th:text="${pedido.tipoAtendimento != null} ? ${pedido.tipoAtendimento.descricao} : '—'"></td>
+                        <td>
+                            <span th:if="${!#lists.isEmpty(pedido.itens)}"
+                                  th:text="${#lists.size(pedido.itens)} + ' item(ns)'"></span>
+                            <!-- Pedidos da versão anterior -->
+                            <span th:if="${#lists.isEmpty(pedido.itens)}" class="text-muted"
+                                  th:text="${pedido.sabor ?: pedido.tipoPizza ?: '—'}"></span>
+                        </td>
+                        <td class="text-end"
+                            th:text="${pedido.valorTotal != null} ? ${#numbers.formatDecimal(pedido.valorTotal, 1, 'POINT', 2, 'COMMA')} : '—'"></td>
+                        <td>
+                            <span class="badge" th:classappend="${pedido.status.corBadge}"
+                                  th:text="${pedido.status.descricao}"></span>
+                        </td>
+                        <td class="small">
+                            <div th:text="${#temporals.format(pedido.dataHoraEntrada, 'dd/MM/yyyy HH:mm')}"></div>
+                            <div class="text-muted" th:text="${pedido.responsavelEntrada}"></div>
+                        </td>
+                        <td class="small">
+                            <div th:text="${pedido.dataHoraSaida != null} ? ${#temporals.format(pedido.dataHoraSaida, 'dd/MM/yyyy HH:mm')} : '—'"></div>
+                            <div class="text-muted" th:text="${pedido.responsavelSaida}"></div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <a th:href="@{/pedidos/{id}(id=${pedido.id})}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Detalhes
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(pedidos)}">
+            Total: <strong th:text="${#lists.size(pedidos)}"></strong> pedido(s)
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
