@@ -9,3 +9,6 @@ MONGODB_DATABASE=pediupatrao
 
 # (Opcional) senha inicial dos usuários admin, gerente e atendente criados na primeira execução
 # APP_SEED_SENHA=TroqueEstaSenha@2026
+
+APP_DEMO_ENABLED=false
+APP_DEMO_DIAS=90
