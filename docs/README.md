@@ -6,7 +6,6 @@
 | 2 | [API do dashboard](02-api-dashboard.md) | Os 9 endpoints: **parâmetros, exemplos de requisição e resposta e possíveis erros** |
 | 3 | [Evidências de testes](03-evidencias-de-testes.md) | 153 testes automatizados, 24 chamadas `curl`, consistência entre endpoints, desempenho e capturas do **dashboard funcionando** |
 | 4 | [Análise e projeto](04-analise-e-projeto.md) | Arquitetura, agregações no MongoDB, definições de negócio, decisões de visualização, segurança e gitflow |
-| 5 | [Roteiro do vídeo](05-roteiro-do-video.md) | Roteiro cena a cena da apresentação de até 3 minutos |
 
 ## Pasta `evidencias/`
 

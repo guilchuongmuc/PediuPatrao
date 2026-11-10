@@ -246,6 +246,7 @@ gitGraph
 | `feature/serie-periodo-parcial` | Ajuste da API e do gráfico para períodos incompletos |
 | `feature/documentacao` | Esta documentação e as evidências |
 | `release/2.0.0` | Versão do projeto ajustada para 2.0.0 e verificação final |
+| `hotfix/2.0.1` | Ajuste pontual na documentação publicada, integrado à `main` (tag `v2.0.1`) e à `develop` |
 
 Todos os merges usam `--no-ff`, para que cada funcionalidade fique visível no histórico.
 

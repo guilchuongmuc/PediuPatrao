@@ -9,7 +9,7 @@ Evolução do projeto **PediuPatrão** (Spring Boot + Spring Security + Thymelea
 - **auditoria persistente no MongoDB**, somente leitura e com verificação de integridade;
 - **dashboard administrativo (versão 2.0)** com indicadores de vendas, gráficos, situação dos pedidos, ranking de produtos e filtros, alimentado por uma API REST própria (`/api/dashboard`).
 
-> 📄 **Documentação do dashboard:** [requisitos](docs/01-requisitos.md) · [API e endpoints](docs/02-api-dashboard.md) · [evidências de testes](docs/03-evidencias-de-testes.md) · [análise e projeto](docs/04-analise-e-projeto.md) · [roteiro do vídeo](docs/05-roteiro-do-video.md)
+> 📄 **Documentação do dashboard:** [requisitos](docs/01-requisitos.md) · [API e endpoints](docs/02-api-dashboard.md) · [evidências de testes](docs/03-evidencias-de-testes.md) · [análise e projeto](docs/04-analise-e-projeto.md)
 
 ---
 
