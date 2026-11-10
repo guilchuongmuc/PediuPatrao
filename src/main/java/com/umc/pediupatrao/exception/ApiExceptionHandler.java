@@ -39,18 +39,37 @@ public class ApiExceptionHandler {
     public ResponseEntity<ErroResponse> validacao(MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> campos = new LinkedHashMap<>();
         for (FieldError erro : ex.getBindingResult().getFieldErrors()) {
-            campos.putIfAbsent(erro.getField(), erro.getDefaultMessage());
+            campos.putIfAbsent(erro.getField(), erro.isBindingFailure()
+                    ? "Valor inválido: " + erro.getRejectedValue()
+                    : erro.getDefaultMessage());
         }
         ErroResponse corpo = new ErroResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
                 "Dados inválidos", "Verifique os campos informados.", request.getRequestURI(), campos);
         return ResponseEntity.badRequest().body(corpo);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
-        MissingServletRequestParameterException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class})
     public ResponseEntity<ErroResponse> requisicaoInvalida(Exception ex, HttpServletRequest request) {
         return resposta(HttpStatus.BAD_REQUEST, "Requisição inválida",
                 "Corpo ou parâmetros da requisição em formato inválido.", request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErroResponse> tipoInvalido(MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request) {
+        String mensagem = "Valor inválido para o parâmetro '" + ex.getName() + "'.";
+        ErroResponse corpo = new ErroResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+                "Requisição inválida", mensagem, request.getRequestURI(),
+                Map.of(ex.getName(), "Valor inválido: " + ex.getValue()));
+        return ResponseEntity.badRequest().body(corpo);
+    }
+
+    @ExceptionHandler(ParametroInvalidoException.class)
+    public ResponseEntity<ErroResponse> parametroInvalido(ParametroInvalidoException ex, HttpServletRequest request) {
+        ErroResponse corpo = new ErroResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+                "Parâmetro inválido", ex.getMessage(), request.getRequestURI(),
+                Map.of(ex.getParametro(), ex.getMessage()));
+        return ResponseEntity.badRequest().body(corpo);
     }
 
     @ExceptionHandler(OptimisticLockingFailureException.class)

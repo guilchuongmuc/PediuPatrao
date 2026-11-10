@@ -91,6 +91,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/auditoria", "/auditoria/**", "/api/auditoria", "/api/auditoria/**")
                         .hasAnyRole("ADMIN", "GERENTE")
 
+                        .requestMatchers(HttpMethod.GET, "/dashboard", "/api/dashboard/**")
+                        .hasAnyRole("ADMIN", "GERENTE")
+
                         // Pedidos: desconto e cancelamento exclusivos do GERENTE (inclusive em relação ao ADMIN)
                         .requestMatchers(HttpMethod.POST, "/pedidos/*/desconto", "/pedidos/*/cancelar",
                                 "/api/pedidos/*/desconto", "/api/pedidos/*/cancelamento")
