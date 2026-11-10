@@ -200,6 +200,27 @@ class DashboardServiceTest {
 
         assertThat(serie.pontos()).extracting(SerieVendasResponse.Ponto::inicio).containsExactly(
                 LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 9), LocalDate.of(2026, 11, 16));
+        assertThat(serie.pontos()).extracting(SerieVendasResponse.Ponto::fim).containsExactly(
+                LocalDate.of(2026, 11, 8), LocalDate.of(2026, 11, 15), LocalDate.of(2026, 11, 22));
+    }
+
+    @Test
+    void serieMarcaGruposIncompletosOuEmAndamento() {
+        when(repository.serie(any(), any())).thenReturn(List.of());
+
+        SerieVendasResponse semanal = service.vendas(FiltroDashboardParams.periodo(
+                LocalDate.of(2026, 10, 5), HOJE), Agrupamento.SEMANA);
+        SerieVendasResponse diaria = service.vendas(FiltroDashboardParams.periodo(
+                LocalDate.of(2026, 11, 8), HOJE), Agrupamento.DIA);
+        SerieVendasResponse mensal = service.vendas(FiltroDashboardParams.periodo(
+                LocalDate.of(2026, 8, 15), LocalDate.of(2026, 10, 31)), Agrupamento.MES);
+
+        assertThat(semanal.pontos()).extracting(SerieVendasResponse.Ponto::parcial)
+                .containsExactly(false, false, false, false, false, true);
+        assertThat(diaria.pontos()).extracting(SerieVendasResponse.Ponto::parcial)
+                .containsExactly(false, false, true);
+        assertThat(mensal.pontos()).extracting(SerieVendasResponse.Ponto::parcial)
+                .containsExactly(true, false, false);
     }
 
     @Test

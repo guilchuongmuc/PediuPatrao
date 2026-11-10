@@ -43,6 +43,7 @@
     };
     const STATUS_EM_ABERTO = new Set(['RECEBIDO', 'EM_PREPARACAO', 'PRONTO', 'SAIU_PARA_ENTREGA', 'RETIRADO']);
     const NOMES_AGRUPAMENTO = {DIA: 'dia', SEMANA: 'semana', MES: 'mês'};
+    const NOMES_PARCIAL = {DIA: 'dia em andamento', SEMANA: 'semana incompleta', MES: 'mês incompleto'};
 
     const fmtMoeda = new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'});
     const fmtMoedaCompacta = new Intl.NumberFormat('pt-BR', {
@@ -568,6 +569,18 @@
                 + `${dataCurta(resumo.periodoAnterior.inicio)} a ${dataCurta(resumo.periodoAnterior.fim)}`);
     }
 
+    function descricaoParcial(ponto, serie) {
+        if (serie.agrupamento === 'DIA') {
+            return 'Dia em andamento';
+        }
+        const hoje = new Date().toLocaleDateString('sv-SE');
+        const de = ponto.inicio < serie.periodo.inicio ? serie.periodo.inicio : ponto.inicio;
+        const ate = ponto.fim > serie.periodo.fim ? serie.periodo.fim : ponto.fim;
+        const emAndamento = de <= hoje && hoje <= ate;
+        return `Parcial: considera ${dataCurta(de)} a ${dataCurta(emAndamento ? hoje : ate)}`
+                + (emAndamento ? ' (em andamento)' : '');
+    }
+
     function renderVendas(serie) {
         const pontos = serie.pontos;
         const unidade = NOMES_AGRUPAMENTO[serie.agrupamento] || 'período';
@@ -576,14 +589,18 @@
         const melhor = pontos.reduce((maior, ponto) => numero(ponto.faturamento) > numero(maior.faturamento) ? ponto : maior,
                 pontos[0] || {faturamento: 0});
         const total = pontos.reduce((soma, ponto) => soma + numero(ponto.faturamento), 0);
+        const temParcial = pontos.some(ponto => ponto.parcial);
+        const tracejado = (contexto, valor) =>
+                pontos[contexto.p0DataIndex]?.parcial || pontos[contexto.p1DataIndex]?.parcial ? valor : undefined;
         texto('subtituloVendas', temVendas
                 ? `Por ${unidade} · melhor ${unidade}: ${melhor.rotulo} (${moeda(melhor.faturamento)})`
+                + (temParcial ? ` · tracejado: ${NOMES_PARCIAL[serie.agrupamento] || 'período incompleto'}` : '')
                 : '');
 
         preencherTabela('vendas', [serie.agrupamento === 'SEMANA' ? 'Semana iniciada em' : 'Período', 'Pedidos',
             'Cancelados', 'Faturamento', 'Ticket médio'],
-                pontos.map(p => [p.rotulo, inteiro(p.pedidos), inteiro(p.cancelados), moeda(p.faturamento),
-                    moeda(p.ticketMedio)]));
+                pontos.map(p => [p.rotulo + (p.parcial ? ' (parcial)' : ''), inteiro(p.pedidos),
+                    inteiro(p.cancelados), moeda(p.faturamento), moeda(p.ticketMedio)]));
 
         desenhar('vendas', 'graficoVendas', {
             type: 'line',
@@ -603,7 +620,10 @@
                     pointBackgroundColor: CORES.serie1,
                     pointBorderColor: CORES.superficie,
                     pointHoverBorderWidth: 2,
-                    tension: 0
+                    tension: 0,
+                    segment: {
+                        borderDash: contexto => tracejado(contexto, [6, 4])
+                    }
                 }]
             },
             options: {
@@ -620,6 +640,9 @@
                                 const linhas = [`${inteiro(ponto.pedidos)} pedidos · ticket médio ${moeda(ponto.ticketMedio)}`];
                                 if (ponto.cancelados) {
                                     linhas.push(`${inteiro(ponto.cancelados)} cancelado(s)`);
+                                }
+                                if (ponto.parcial) {
+                                    linhas.push(descricaoParcial(ponto, serie));
                                 }
                                 return linhas;
                             }

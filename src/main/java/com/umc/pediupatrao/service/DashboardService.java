@@ -121,15 +121,19 @@ public class DashboardService {
         Map<LocalDate, PontoSerie> porInicio = repository.serie(filtro, unidade).stream()
                 .collect(Collectors.toMap(PontoSerie::inicio, Function.identity(), (a, b) -> a));
 
+        LocalDate hoje = LocalDate.now(clock);
         List<SerieVendasResponse.Ponto> pontos = new ArrayList<>();
         for (LocalDate inicio = inicioDoGrupo(filtro.inicio(), unidade); !inicio.isAfter(filtro.fim());
                 inicio = proximoGrupo(inicio, unidade)) {
+            LocalDate fim = proximoGrupo(inicio, unidade).minusDays(1);
+            boolean parcial = inicio.isBefore(filtro.inicio()) || fim.isAfter(filtro.fim())
+                    || (!hoje.isBefore(inicio) && !hoje.isAfter(fim));
             PontoSerie ponto = porInicio.get(inicio);
             long pedidos = ponto == null ? 0 : ponto.pedidos();
             long cancelados = ponto == null ? 0 : ponto.cancelados();
             BigDecimal faturamento = ponto == null ? BigDecimal.ZERO : ponto.faturamento();
-            pontos.add(new SerieVendasResponse.Ponto(inicio, rotulo(inicio, unidade), pedidos, cancelados,
-                    dinheiro(faturamento), ticketMedio(faturamento, pedidos - cancelados)));
+            pontos.add(new SerieVendasResponse.Ponto(inicio, fim, rotulo(inicio, unidade), parcial, pedidos,
+                    cancelados, dinheiro(faturamento), ticketMedio(faturamento, pedidos - cancelados)));
         }
         return new SerieVendasResponse(filtro.periodo(), unidade, pontos);
     }
