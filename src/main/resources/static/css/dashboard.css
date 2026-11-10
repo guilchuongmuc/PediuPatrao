@@ -1,0 +1,249 @@
+.dashboard {
+    --superficie: #ffffff;
+    --texto-primario: #0b0b0b;
+    --texto-secundario: #52514e;
+    --texto-suave: #6f6e69;
+    --grade: #e1e0d9;
+    --eixo: #c3c2b7;
+    --serie-1: #2a78d6;
+    --serie-1-suave: #86b6ef;
+    --serie-2: #eb6834;
+    --positivo: #006300;
+    --negativo: #b42828;
+    --contorno: rgba(11, 11, 11, 0.10);
+    transition: opacity .2s ease;
+}
+
+.dashboard.atualizando .painel,
+.dashboard.atualizando .kpi {
+    opacity: .55;
+}
+
+.dashboard .card {
+    border: 1px solid var(--contorno);
+}
+
+.dashboard .kpi-rotulo {
+    font-size: .85rem;
+    color: var(--texto-secundario);
+}
+
+.dashboard .kpi-valor {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--texto-primario);
+    line-height: 1.2;
+    margin-top: .25rem;
+    white-space: nowrap;
+}
+
+.dashboard .kpi-destaque .kpi-valor {
+    font-size: 2.6rem;
+}
+
+.dashboard .kpi-delta,
+.dashboard .kpi-detalhe {
+    font-size: .8rem;
+    color: var(--texto-secundario);
+    margin-top: .25rem;
+}
+
+.dashboard .delta-positivo {
+    color: var(--positivo);
+    font-weight: 600;
+}
+
+.dashboard .delta-negativo {
+    color: var(--negativo);
+    font-weight: 600;
+}
+
+.dashboard .delta-neutro {
+    color: var(--texto-secundario);
+    font-weight: 600;
+}
+
+.dashboard .painel-cabecalho {
+    background: var(--superficie);
+    border-bottom: 1px solid var(--grade);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard .painel-titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--texto-primario);
+}
+
+.dashboard .painel-subtitulo {
+    font-size: .8rem;
+    color: var(--texto-secundario);
+    min-height: 1rem;
+}
+
+.dashboard .grafico {
+    position: relative;
+    height: 240px;
+}
+
+.dashboard .grafico-alto {
+    height: 300px;
+}
+
+.dashboard .painel-vazio {
+    color: var(--texto-secundario);
+    text-align: center;
+    padding: 2.5rem 1rem;
+    font-size: .9rem;
+}
+
+.dashboard .painel.mostrar-tabela .grafico {
+    display: none;
+}
+
+.dashboard .painel.mostrar-tabela .tabela-dados {
+    display: block !important;
+}
+
+.dashboard .painel.sem-dados .grafico,
+.dashboard .painel.sem-dados .tabela-dados,
+.dashboard .painel.sem-dados .barra-segmentada,
+.dashboard .painel.sem-dados table {
+    display: none !important;
+}
+
+.dashboard .tabela-dados {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dashboard .tabela-dados table,
+.dashboard .tabela-ranking,
+.dashboard .tabela-atendimento {
+    font-variant-numeric: tabular-nums;
+    font-size: .85rem;
+}
+
+.dashboard .btn-tabela[aria-pressed="true"] {
+    background: var(--grade);
+}
+
+.dashboard .mini-valor {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--texto-primario);
+}
+
+.dashboard .mini-rotulo {
+    font-size: .75rem;
+    color: var(--texto-secundario);
+}
+
+.dashboard .lista-status li {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr 6.5rem;
+    align-items: center;
+    gap: .5rem;
+    font-size: .85rem;
+    padding: .2rem 0;
+}
+
+.dashboard .lista-status .status-nome {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--texto-primario);
+}
+
+.dashboard .lista-status .status-marca {
+    width: .6rem;
+    height: .6rem;
+    border-radius: 50%;
+    flex: none;
+}
+
+.dashboard .lista-status .status-valor {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--texto-secundario);
+}
+
+.dashboard .trilho {
+    height: 8px;
+    border-radius: 4px;
+    background: #eeede8;
+    overflow: hidden;
+}
+
+.dashboard .trilho > span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+}
+
+.dashboard .coluna-barra {
+    width: 28%;
+    min-width: 90px;
+}
+
+.dashboard .tabela-ranking .produto-categoria {
+    font-size: .75rem;
+    color: var(--texto-suave);
+}
+
+.dashboard .barra-segmentada {
+    display: flex;
+    gap: 2px;
+    height: 28px;
+}
+
+.dashboard .barra-segmentada > div {
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: .8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    padding-left: .5rem;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.dashboard .marca-serie {
+    display: inline-block;
+    width: .75rem;
+    height: .75rem;
+    border-radius: 2px;
+    margin-right: .35rem;
+    vertical-align: -1px;
+}
+
+.dashboard .em-aberto-alerta {
+    color: var(--negativo);
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+    .dashboard .dashboard-topo {
+        padding-left: 3rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .dashboard .kpi-destaque .kpi-valor {
+        font-size: 2rem;
+    }
+
+    .dashboard .lista-status li {
+        grid-template-columns: 8rem 1fr 6rem;
+    }
+
+    .dashboard .coluna-barra {
+        display: none;
+    }
+}

@@ -19,6 +19,12 @@
                             <i class="bi bi-house"></i><span class="d-none d-md-inline">&nbsp;Home</span>
                         </a>
                     </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','GERENTE')">
+                        <a class="nav-link" th:href="@{/dashboard}"
+                           th:classappend="${uriAtual != null and uriAtual.startsWith('/dashboard')} ? 'active'">
+                            <i class="bi bi-speedometer2"></i><span class="d-none d-md-inline">&nbsp;Dashboard</span>
+                        </a>
+                    </li>
                     <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','GERENTE','ATENDENTE')">
                         <a class="nav-link" th:href="@{/pedidos}"
                            th:classappend="${uriAtual != null and uriAtual.startsWith('/pedidos')} ? 'active'">

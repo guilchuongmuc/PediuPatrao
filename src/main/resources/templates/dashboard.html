@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="pt-BR">
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<div th:fragment="content" id="dashboard" class="dashboard"
+     th:attr="data-api=@{/api/dashboard},data-pedidos=@{/pedidos},data-login=@{/login(expirada)}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 dashboard-topo">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h2>
+            <div class="text-secondary small">Desempenho das vendas e situação dos pedidos</div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            <span class="small text-secondary" id="ultimaAtualizacao" aria-live="polite">Carregando dados…</span>
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="autoAtualizar" checked>
+                <label class="form-check-label small" for="autoAtualizar">Atualizar a cada 60 s</label>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAtualizar">
+                <i class="bi bi-arrow-clockwise"></i> Atualizar
+            </button>
+        </div>
+    </div>
+
+    <form id="filtros" class="card shadow-sm mb-3" autocomplete="off" aria-label="Filtros do dashboard">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-4 col-xl-2">
+                    <label class="form-label small mb-1" for="fPeriodo">Período</label>
+                    <select id="fPeriodo" class="form-select form-select-sm">
+                        <option value="hoje">Hoje</option>
+                        <option value="7">Últimos 7 dias</option>
+                        <option value="30" selected>Últimos 30 dias</option>
+                        <option value="90">Últimos 90 dias</option>
+                        <option value="mes">Este mês</option>
+                        <option value="personalizado">Personalizado</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <label class="form-label small mb-1" for="fInicio">De</label>
+                    <input type="date" id="fInicio" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <label class="form-label small mb-1" for="fFim">Até</label>
+                    <input type="date" id="fFim" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <span class="form-label small mb-1 d-block" id="rotuloStatus">Status</span>
+                    <div class="dropdown">
+                        <button class="form-select form-select-sm text-start" type="button" id="fStatusBotao"
+                                data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                                aria-labelledby="rotuloStatus fStatusBotao">Todos</button>
+                        <div class="dropdown-menu p-2 shadow-sm" id="fStatusLista" aria-labelledby="rotuloStatus"></div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <label class="form-label small mb-1" for="fAtendimento">Atendimento</label>
+                    <select id="fAtendimento" class="form-select form-select-sm">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-4 col-xl-2">
+                    <label class="form-label small mb-1" for="fCategoria">Categoria</label>
+                    <select id="fCategoria" class="form-select form-select-sm">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="small text-secondary" id="descricaoPeriodo"></span>
+                <button type="button" class="btn btn-sm btn-link p-0" id="btnLimpar">Limpar filtros</button>
+            </div>
+        </div>
+    </form>
+
+    <div id="alertaFiltro" class="alert alert-warning py-2 d-none" role="alert"></div>
+
+    <section class="row g-3 mb-3" aria-label="Indicadores gerais de vendas" data-painel="resumo">
+        <div class="col-12 painel-erro d-none"></div>
+        <div class="col-12 col-md-6 col-xxl-3">
+            <div class="card kpi kpi-destaque h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="kpi-rotulo">Faturamento</div>
+                    <div class="kpi-valor" id="kpiFaturamento">—</div>
+                    <div class="kpi-delta" id="deltaFaturamento"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xxl">
+            <div class="card kpi h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="kpi-rotulo">Pedidos</div>
+                    <div class="kpi-valor" id="kpiPedidos">—</div>
+                    <div class="kpi-delta" id="deltaPedidos"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 col-xxl">
+            <div class="card kpi h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="kpi-rotulo">Ticket médio</div>
+                    <div class="kpi-valor" id="kpiTicket">—</div>
+                    <div class="kpi-delta" id="deltaTicket"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xxl">
+            <div class="card kpi h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="kpi-rotulo">Cancelamentos</div>
+                    <div class="kpi-valor" id="kpiCancelados">—</div>
+                    <div class="kpi-delta" id="deltaCancelados"></div>
+                    <div class="kpi-detalhe" id="detalheCancelados"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xxl">
+            <div class="card kpi h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="kpi-rotulo">Descontos concedidos</div>
+                    <div class="kpi-valor" id="kpiDescontos">—</div>
+                    <div class="kpi-detalhe" id="detalheDescontos"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4 col-xxl">
+            <div class="card kpi h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="kpi-rotulo">Itens vendidos</div>
+                    <div class="kpi-valor" id="kpiItens">—</div>
+                    <div class="kpi-detalhe" id="detalheItens"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-8">
+            <section class="card h-100 shadow-sm painel" data-painel="vendas" aria-labelledby="tituloVendas">
+                <div class="card-header painel-cabecalho">
+                    <div>
+                        <h3 class="painel-titulo" id="tituloVendas">Faturamento no período</h3>
+                        <div class="painel-subtitulo" id="subtituloVendas"></div>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Agrupar faturamento por">
+                            <input type="radio" class="btn-check" name="agrupamento" id="agrDia" value="DIA" checked>
+                            <label class="btn btn-outline-secondary" for="agrDia">Dia</label>
+                            <input type="radio" class="btn-check" name="agrupamento" id="agrSemana" value="SEMANA">
+                            <label class="btn btn-outline-secondary" for="agrSemana">Semana</label>
+                            <input type="radio" class="btn-check" name="agrupamento" id="agrMes" value="MES">
+                            <label class="btn btn-outline-secondary" for="agrMes">Mês</label>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-light btn-tabela" aria-pressed="false">
+                            <i class="bi bi-table"></i><span class="visually-hidden">Ver dados em tabela</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="painel-erro d-none"></div>
+                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+                    <div class="grafico grafico-alto"><canvas id="graficoVendas" role="img"></canvas></div>
+                    <div class="tabela-dados d-none"></div>
+                </div>
+            </section>
+        </div>
+        <div class="col-12 col-xl-4">
+            <section class="card h-100 shadow-sm painel" data-painel="status" aria-labelledby="tituloStatus">
+                <div class="card-header painel-cabecalho">
+                    <div>
+                        <h3 class="painel-titulo" id="tituloStatus">Situação dos pedidos</h3>
+                        <div class="painel-subtitulo" id="subtituloStatus"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="painel-erro d-none"></div>
+                    <div class="row g-2 text-center mb-3">
+                        <div class="col-4">
+                            <div class="mini-valor" id="statusAndamento">—</div>
+                            <div class="mini-rotulo">Em andamento</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="mini-valor" id="statusFinalizados">—</div>
+                            <div class="mini-rotulo">Finalizados</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="mini-valor" id="statusCancelados">—</div>
+                            <div class="mini-rotulo">Cancelados</div>
+                        </div>
+                    </div>
+                    <ul class="lista-status list-unstyled mb-3" id="listaStatus"></ul>
+                    <div class="tempos border-top pt-3">
+                        <div class="small fw-semibold mb-2">Tempo médio desde a entrada</div>
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <div class="mini-valor" id="tempoPronto">—</div>
+                                <div class="mini-rotulo">até ficar pronto</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="mini-valor" id="tempoSaida">—</div>
+                                <div class="mini-rotulo">até a saída</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="mini-valor" id="tempoFinalizacao">—</div>
+                                <div class="mini-rotulo">até finalizar</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-xl-7">
+            <section class="card h-100 shadow-sm painel" data-painel="ranking" aria-labelledby="tituloRanking">
+                <div class="card-header painel-cabecalho">
+                    <div>
+                        <h3 class="painel-titulo" id="tituloRanking">Produtos mais vendidos</h3>
+                        <div class="painel-subtitulo" id="subtituloRanking"></div>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Ordenar ranking por">
+                        <input type="radio" class="btn-check" name="criterio" id="critQuantidade" value="QUANTIDADE" checked>
+                        <label class="btn btn-outline-secondary" for="critQuantidade">Quantidade</label>
+                        <input type="radio" class="btn-check" name="criterio" id="critFaturamento" value="FATURAMENTO">
+                        <label class="btn btn-outline-secondary" for="critFaturamento">Faturamento</label>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="painel-erro d-none m-3"></div>
+                    <div class="painel-vazio d-none m-3">Nenhum produto vendido no período selecionado.</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0 tabela-ranking">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="ps-3">#</th>
+                                    <th scope="col">Produto</th>
+                                    <th scope="col" class="coluna-barra"><span class="visually-hidden">Participação</span></th>
+                                    <th scope="col" class="text-end">Qtd.</th>
+                                    <th scope="col" class="text-end">Faturamento</th>
+                                    <th scope="col" class="text-end pe-3">Part.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corpoRanking"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="col-12 col-xl-5 d-flex flex-column gap-3">
+            <section class="card shadow-sm painel flex-grow-1" data-painel="categoria" aria-labelledby="tituloCategoria">
+                <div class="card-header painel-cabecalho">
+                    <div>
+                        <h3 class="painel-titulo" id="tituloCategoria">Faturamento por categoria</h3>
+                        <div class="painel-subtitulo">Valor bruto dos itens vendidos</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light btn-tabela" aria-pressed="false">
+                        <i class="bi bi-table"></i><span class="visually-hidden">Ver dados em tabela</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="painel-erro d-none"></div>
+                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+                    <div class="grafico" id="caixaCategoria"><canvas id="graficoCategoria" role="img"></canvas></div>
+                    <div class="tabela-dados d-none"></div>
+                </div>
+            </section>
+            <section class="card shadow-sm painel" data-painel="atendimento" aria-labelledby="tituloAtendimento">
+                <div class="card-header painel-cabecalho">
+                    <div>
+                        <h3 class="painel-titulo" id="tituloAtendimento">Entrega × retirada</h3>
+                        <div class="painel-subtitulo">Participação no número de pedidos válidos</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="painel-erro d-none"></div>
+                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+                    <div class="barra-segmentada" id="barraAtendimento" role="img"></div>
+                    <table class="table table-sm mb-0 mt-3 tabela-atendimento">
+                        <thead>
+                            <tr>
+                                <th scope="col">Tipo</th>
+                                <th scope="col" class="text-end">Pedidos</th>
+                                <th scope="col" class="text-end">Faturamento</th>
+                                <th scope="col" class="text-end">Ticket médio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpoAtendimento"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-lg-6">
+            <section class="card h-100 shadow-sm painel" data-painel="horario" aria-labelledby="tituloHorario">
+                <div class="card-header painel-cabecalho">
+                    <div>
+                        <h3 class="painel-titulo" id="tituloHorario">Pedidos por horário</h3>
+                        <div class="painel-subtitulo" id="subtituloHorario"></div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light btn-tabela" aria-pressed="false">
+                        <i class="bi bi-table"></i><span class="visually-hidden">Ver dados em tabela</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="painel-erro d-none"></div>
+                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+                    <div class="grafico"><canvas id="graficoHorario" role="img"></canvas></div>
+                    <div class="tabela-dados d-none"></div>
+                </div>
+            </section>
+        </div>
+        <div class="col-12 col-lg-6">
+            <section class="card h-100 shadow-sm painel" data-painel="diaSemana" aria-labelledby="tituloDiaSemana">
+                <div class="card-header painel-cabecalho">
+                    <div>
+                        <h3 class="painel-titulo" id="tituloDiaSemana">Média de pedidos por dia da semana</h3>
+                        <div class="painel-subtitulo" id="subtituloDiaSemana"></div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light btn-tabela" aria-pressed="false">
+                        <i class="bi bi-table"></i><span class="visually-hidden">Ver dados em tabela</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="painel-erro d-none"></div>
+                    <div class="painel-vazio d-none">Nenhuma venda no período selecionado.</div>
+                    <div class="grafico"><canvas id="graficoDiaSemana" role="img"></canvas></div>
+                    <div class="tabela-dados d-none"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <section class="card shadow-sm painel mb-3" data-painel="recentes" aria-labelledby="tituloRecentes">
+        <div class="card-header painel-cabecalho">
+            <div>
+                <h3 class="painel-titulo" id="tituloRecentes">Pedidos recentes</h3>
+                <div class="painel-subtitulo">Últimos 10 pedidos que atendem aos filtros</div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="painel-erro d-none m-3"></div>
+            <div class="painel-vazio d-none m-3">Nenhum pedido no período selecionado.</div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="ps-3">Nº</th>
+                            <th scope="col">Cliente</th>
+                            <th scope="col">Atendimento</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end">Total</th>
+                            <th scope="col">Entrada</th>
+                            <th scope="col" class="pe-3">Em aberto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoRecentes"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script th:src="@{/js/dashboard.js}"></script>
+</div>
+
+</body>
+</html>
