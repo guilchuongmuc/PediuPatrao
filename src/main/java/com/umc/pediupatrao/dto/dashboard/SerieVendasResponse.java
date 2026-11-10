@@ -8,7 +8,9 @@ public record SerieVendasResponse(Periodo periodo, Agrupamento agrupamento, List
 
     public record Ponto(
             LocalDate inicio,
+            LocalDate fim,
             String rotulo,
+            boolean parcial,
             long pedidos,
             long cancelados,
             BigDecimal faturamento,
