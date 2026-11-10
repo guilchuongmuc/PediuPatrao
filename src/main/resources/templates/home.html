@@ -17,6 +17,14 @@
 
     <!-- Atalhos conforme o perfil (as permissões são validadas no servidor) -->
     <div class="row g-3 justify-content-center">
+        <div class="col-sm-6 col-lg-3" sec:authorize="hasAnyRole('ADMIN','GERENTE')">
+            <a th:href="@{/dashboard}" class="card text-decoration-none h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-speedometer2 fs-2 text-primary"></i>
+                    <h5 class="mt-2 mb-0">Dashboard</h5>
+                </div>
+            </a>
+        </div>
         <div class="col-sm-6 col-lg-3" sec:authorize="hasAnyRole('GERENTE','ATENDENTE')">
             <a th:href="@{/pedidos/novo}" class="card text-decoration-none h-100 shadow-sm">
                 <div class="card-body text-center">
