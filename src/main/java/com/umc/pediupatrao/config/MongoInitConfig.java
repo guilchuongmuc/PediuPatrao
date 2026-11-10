@@ -43,6 +43,9 @@ public class MongoInitConfig implements CommandLineRunner {
         criarIndice("auditoria", new Index().on("usuario", Sort.Direction.ASC).named("ix_usuario"));
         criarIndice("pedidos", new Index().on("numero", Sort.Direction.ASC).unique().sparse().named("ux_numero"));
         criarIndice("pedidos", new Index().on("clienteId", Sort.Direction.ASC).named("ix_clienteId"));
+        criarIndice("pedidos", new Index().on("dataHoraEntrada", Sort.Direction.DESC).named("ix_dataHoraEntrada"));
+        criarIndice("pedidos", new Index().on("status", Sort.Direction.ASC)
+                .on("dataHoraEntrada", Sort.Direction.DESC).named("ix_status_dataHoraEntrada"));
         criarIndice("usuarios", new Index().on("username", Sort.Direction.ASC).unique().named("ux_username"));
     }
 

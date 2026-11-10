@@ -6,7 +6,10 @@ Evolução do projeto **PediuPatrão** (Spring Boot + Spring Security + Thymelea
 - **pedidos com itens, valores calculados no servidor, responsáveis e data/hora de entrada e saída**;
 - **fluxo de status controlado** (RECEBIDO → EM PREPARAÇÃO → PRONTO → SAIU PARA ENTREGA/RETIRADO → FINALIZADO);
 - **desconto e cancelamento exclusivos do GERENTE**;
-- **auditoria persistente no MongoDB**, somente leitura e com verificação de integridade.
+- **auditoria persistente no MongoDB**, somente leitura e com verificação de integridade;
+- **dashboard administrativo (versão 2.0)** com indicadores de vendas, gráficos, situação dos pedidos, ranking de produtos e filtros, alimentado por uma API REST própria (`/api/dashboard`).
+
+> 📄 **Documentação do dashboard:** [requisitos](docs/01-requisitos.md) · [API e endpoints](docs/02-api-dashboard.md) · [evidências de testes](docs/03-evidencias-de-testes.md) · [análise e projeto](docs/04-analise-e-projeto.md) · [roteiro do vídeo](docs/05-roteiro-do-video.md)
 
 ---
 
@@ -20,6 +23,7 @@ Evolução do projeto **PediuPatrão** (Spring Boot + Spring Security + Thymelea
 | MongoDB | 8.0 local **ou** MongoDB Atlas |
 | Testes | JUnit 5, Mockito, Spring Security Test (MockMvc) |
 | Interface | Bootstrap 5.3 + Bootstrap Icons |
+| Gráficos do dashboard | Chart.js 4.4.7 (CDN), com visão em tabela quando a CDN não carrega |
 
 ---
 
@@ -76,9 +80,43 @@ Na primeira execução, o `DataInitializer` cria **um usuário de cada perfil** 
 A senha inicial dos três usuários vem da propriedade `app.seed.senha-inicial` (padrão de desenvolvimento: `Pizza@2026`).
 Para usar outra senha, defina a variável `APP_SEED_SENHA` antes da primeira execução. A senha nunca é escrita no log.
 
+### 2.5 Dados de demonstração
+
+Para ver o dashboard com dados realistas, ative o gerador de pedidos no `application-local.properties`:
+
+```properties
+APP_DEMO_ENABLED=true
+APP_DEMO_DIAS=90
+```
+
+Na inicialização, se houver menos de 100 pedidos, o sistema cria cerca de **1.100 pedidos nos últimos 90 dias**, completa o cardápio até 16 produtos e cadastra 16 clientes fictícios.
+Os pedidos seguem o fluxo real, com responsáveis, horários, descontos e cancelamentos do gerente, e os de hoje ficam em andamento.
+A semente é fixa, então os dados saem iguais em qualquer máquina. O gerador fica **desligado por padrão** e nunca roda de novo sobre uma base que já tem pedidos.
+
 ---
 
-## 3. Requisitos implementados
+## 3. Dashboard administrativo (versão 2.0)
+
+Acesse **http://localhost:8080/dashboard** com `admin` ou `gerente`. O atendente recebe `403`.
+
+![Dashboard](docs/evidencias/telas/01-dashboard-visao-geral.png)
+
+| Requisito | Na tela | Endpoint |
+|---|---|---|
+| RF01 — Indicadores gerais | Faturamento, pedidos, ticket médio, cancelamentos, descontos e itens, comparados ao período anterior | `GET /api/dashboard/resumo` |
+| RF02 — Análise de vendas | Faturamento por dia, semana ou mês, por categoria, entrega × retirada, horários de pico e dia da semana | `GET /api/dashboard/vendas`, `/vendas/por-categoria`, `/vendas/por-atendimento`, `/vendas/por-horario` |
+| RF03 — Situação dos pedidos | Pedidos por status, tempos médios e pedidos recentes com alerta de atraso | `GET /api/dashboard/pedidos/status`, `/pedidos/recentes` |
+| RF04 — Produtos mais vendidos | Ranking por quantidade ou faturamento, com participação | `GET /api/dashboard/produtos/mais-vendidos` |
+| RF05 — Filtros | Período (atalhos ou datas), status, atendimento e categoria, refletidos na URL | `GET /api/dashboard/filtros` e os parâmetros comuns |
+| RF06 — Integração com a API | Cada painel faz o próprio `fetch`, em paralelo, com tratamento de erro e de sessão expirada | Todos |
+| RF07 — Atualização e tratamento | Botão Atualizar, atualização automática a cada 60 s, estados de carregando, vazio e erro, e períodos parciais sinalizados | Todos |
+
+Os cálculos são feitos por **agregações no MongoDB** (`DashboardRepository`), com valores exatos em decimal e datas no fuso da pizzaria.
+As decisões de projeto estão em [docs/04-analise-e-projeto.md](docs/04-analise-e-projeto.md).
+
+---
+
+## 4. Requisitos implementados (versão 1.x)
 
 ### RF01 — Controle de usuários e permissões
 
@@ -163,7 +201,7 @@ Coleção `auditoria` no MongoDB (`RegistroAuditoria`). Cada evento registra:
 
 ---
 
-## 4. Segurança aplicada
+## 5. Segurança aplicada
 
 - **CSRF ativo** em todos os formulários (o `th:action` inclui o token) e nas chamadas `fetch`, que leem o token das meta tags do layout e o enviam no cabeçalho `X-CSRF-TOKEN`. O logout é feito por `POST`.
 - **APIs** respondem `401` (não autenticado) e `403` (sem permissão) em **JSON**. As telas redirecionam para o login ou mostram a página de erro.
@@ -174,7 +212,7 @@ Coleção `auditoria` no MongoDB (`RegistroAuditoria`). Cada evento registra:
 
 ---
 
-## 5. API REST
+## 6. API REST
 
 | Método | Rota | Perfis |
 |---|---|---|
@@ -191,6 +229,7 @@ Coleção `auditoria` no MongoDB (`RegistroAuditoria`). Cada evento registra:
 | POST / PUT / DELETE | `/api/produtos/**` | GERENTE |
 | GET / POST / PUT / DELETE | `/api/usuarios/**` | **ADMIN** |
 | GET | `/api/auditoria`, `/api/auditoria/{id}`, `/api/auditoria/integridade` | ADMIN, GERENTE |
+| GET | `/api/dashboard/resumo`, `/vendas`, `/vendas/por-categoria`, `/vendas/por-atendimento`, `/vendas/por-horario`, `/pedidos/status`, `/pedidos/recentes`, `/produtos/mais-vendidos`, `/filtros` | ADMIN, GERENTE |
 | GET | `/api/csrf` | autenticado |
 
 Exemplo com `curl` (Git Bash). O token CSRF fica ligado à sessão do cookie:
@@ -205,15 +244,17 @@ curl -u atendente:SENHA -b cookies.txt -H "X-CSRF-TOKEN: TOKEN" -H "Content-Type
 
 Resposta esperada para o atendente: `403 {"erro":"Acesso negado","mensagem":"O perfil ATENDENTE não tem permissão para esta operação."}`.
 
+Os parâmetros, exemplos e erros de cada endpoint do dashboard estão em [docs/02-api-dashboard.md](docs/02-api-dashboard.md).
+
 ---
 
-## 6. Testes
+## 7. Testes
 
 ```bash
 .\mvnw.cmd test
 ```
 
-São **83 testes automatizados**, e nenhum precisa de banco de dados:
+São **153 testes automatizados**. Só o `DashboardRepositoryMongoTest` usa um MongoDB local, no banco separado `pediupatrao_teste_dashboard`, e ele é ignorado se não houver MongoDB em `127.0.0.1:27017`.
 
 | Classe | O que verifica |
 |---|---|
@@ -224,3 +265,11 @@ São **83 testes automatizados**, e nenhum precisa de banco de dados:
 | `AuditoriaServiceTest` | Usuário/perfil/data, encadeamento de hash, detecção de adulteração e remoção |
 | `AutorizacaoServicosTest` | `@PreAuthorize` nos serviços (2ª camada) |
 | `SegurancaHttpTest` | 401/403 nas APIs e telas, CSRF, cadastro de usuário não público, auditoria somente leitura |
+| `DashboardServiceTest` | Filtros e limites, indicadores e comparação, séries com lacunas e períodos parciais, médias por dia da semana, ranking, status legados |
+| `DashboardRepositoryMongoTest` | Agregações no MongoDB real: totais, fuso horário, semana e mês, horários, tempos médios, produtos, categorias e filtros |
+| `DashboardControllerTest` | Parâmetros da URL, valores padrão, 400/401/403 e somente leitura |
+| `DashboardAutorizacaoTest` | `@PreAuthorize` do dashboard (ADMIN e GERENTE) |
+| `DashboardWebControllerTest` | Página `/dashboard` e atalho do menu por perfil |
+| `GeradorPedidosDemonstracaoTest` | Dados de demonstração coerentes com as regras e determinísticos |
+
+As evidências (resultado dos testes, chamadas `curl` e capturas de tela) estão em [docs/03-evidencias-de-testes.md](docs/03-evidencias-de-testes.md).
